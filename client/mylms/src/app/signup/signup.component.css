@@ -1,0 +1,8 @@
+form {
+    width: 20%;
+    margin-left: 75%;
+    font-size: medium;
+}
+input {
+    border: 1.8px solid lightslategray;
+}

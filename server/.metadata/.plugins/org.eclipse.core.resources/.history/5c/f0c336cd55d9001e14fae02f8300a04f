@@ -1,0 +1,252 @@
+package com.example.lms.service;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.lms.dto.EmailVerificationStatus;
+import com.example.lms.dto.LoginSuccessStatus;
+import com.example.lms.dto.OTPCheckStatus;
+import com.example.lms.dto.OTPSendStatus;
+import com.example.lms.dto.PasswordResetStatus;
+import com.example.lms.dto.SignupSuccessStatus;
+import com.example.lms.entity.AppUser;
+import com.example.lms.repository.AppUserRepository;
+
+@Service
+public class AppUserService {
+	
+	@Autowired
+	private AppUserRepository appUserRepository;
+	
+	@Autowired
+	private MailService mailService;
+	
+	// signup
+	public SignupSuccessStatus save(AppUser appUser) throws Exception {
+		String token = generateToken();
+		appUser.setToken(token);
+		appUserRepository.save(appUser);
+		mailService.sendMailToVerifyEmailId(token, appUser.getEmail());
+		SignupSuccessStatus signupSuccessStatus = new SignupSuccessStatus();
+		signupSuccessStatus.setMessage("Signup is very success. We have sent a mail. Pls verify your email by clicking on activate email from your email box");
+		signupSuccessStatus.setStatus(true);
+		return signupSuccessStatus; 
+	}
+	
+	
+	private String generateToken() {
+		String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789";
+		String token = "";
+		for(int i = 0; i <= 5; i++) {
+			token += str.charAt((int)(str.length() * Math.random()));
+		}
+		return token;
+	}
+	
+	
+	public EmailVerificationStatus verifyMailId(String token, String email) {
+		EmailVerificationStatus emailVerificationStatus = new EmailVerificationStatus();
+		emailVerificationStatus.setMessage("Sorry. the token was wrong");
+	    AppUser appUser = appUserRepository.findByTokenAndEmail(token,email);
+	    if(appUser != null)	// check in the database whether there is a appuser object with the given token and email
+	    {
+	    	appUser.setStatus(1);
+	    	appUserRepository.save(appUser);
+	    	emailVerificationStatus.setStatus(true);
+	    	emailVerificationStatus.setMessage("Your email verified successfully");
+	    }
+	    return emailVerificationStatus;
+	}
+	
+	
+	
+//	adminLogin
+	public LoginSuccessStatus adminLogin(AppUser adminObject) {
+		LoginSuccessStatus loginSuccessStatus = new LoginSuccessStatus();
+		if(adminObject.getEmail() == null || adminObject.getPassword() == null) 
+		{
+			loginSuccessStatus.setMessage("Admin Login Unsuccessfull");
+			loginSuccessStatus.setStatus(false);
+		}
+		else if(adminObject.getEmail().equals("lokeshcham0505@gmail.com") && adminObject.getPassword().equals("14m221"))
+		{
+			loginSuccessStatus.setMessage("Admin Login Successfull");
+			loginSuccessStatus.setStatus(true);
+		}
+		else 
+		{
+			loginSuccessStatus.setMessage("Admin Login Unsuccessfull");
+			loginSuccessStatus.setStatus(false);
+		}
+		return loginSuccessStatus;
+	}
+	
+	
+	// clientLogin
+	public LoginSuccessStatus clientLogin(AppUser clientObject) {
+		// one way
+//		LoginSuccessStatus loginSuccessStatus = new LoginSuccessStatus();
+//		try
+//		{
+//			AppUser dbObject = appUserRepository.findById(clientObject.getEmail()).get();
+//			if(dbObject != null) 
+//			{
+//				loginSuccessStatus.setMessage("Invalid Password");
+//				if(dbObject.getPassword().equals(clientObject.getPassword())) 
+//				{
+//					loginSuccessStatus.setMessage("Client Login Successfull");
+//					loginSuccessStatus.setStatus(true);
+//				}
+//			}
+//		}
+//		catch(NoSuchElementException ex)
+//		{
+//			loginSuccessStatus.setMessage("Kindly signup to proceed login");
+//		}
+//	    return loginSuccessStatus;
+		
+		// another way
+		LoginSuccessStatus loginSuccessStatus = new LoginSuccessStatus();
+		loginSuccessStatus.setMessage("Kindly signup to proceed login");
+		Optional<AppUser> optional = appUserRepository.findById(clientObject.getEmail());
+		if(optional.isPresent())
+		{
+			AppUser dbObject = optional.get();
+			loginSuccessStatus.setMessage("Invalid Password");
+			if(dbObject.getPassword().equals(clientObject.getPassword()))
+			{
+				loginSuccessStatus.setMessage("Email Id is not verified. Pls verify your email id from your registered mailbox.");
+				if(dbObject.getStatus() == 1) 
+				{
+					loginSuccessStatus.setMessage("Client Login Successfull");
+					loginSuccessStatus.setStatus(true);
+				}
+			}
+		}
+		return loginSuccessStatus;
+	}
+	
+	
+	// forgotten password
+	public OTPSendStatus forgotPassword(String recoveryEmailOrMobileNo) throws Exception {
+		OTPSendStatus otp = new OTPSendStatus();
+		otp.setOtpMessage("otp message");
+		otp.setOtpStatus(false);
+		int mobileNo;
+		String emailId;
+		try {
+			mobileNo = Integer.parseInt(recoveryEmailOrMobileNo);
+			if((recoveryEmailOrMobileNo.length() == 10)) {
+				
+				// msg sending logic
+				
+				otp.setOtpMessage("OTP sent to your mobile no");
+				otp.setOtpStatus(true);
+			}
+			else {
+				otp.setOtpMessage("Entered mobile no is not valid!");
+				otp.setOtpStatus(false);
+			}
+		}
+		catch(NumberFormatException ex) {
+			if((recoveryEmailOrMobileNo.indexOf('@') != -1) && (recoveryEmailOrMobileNo.indexOf('.') != -1)) {
+				emailId = recoveryEmailOrMobileNo;
+				System.out.println(emailId);
+				// email sending logic
+				String otpmail = mailService.sendMailForForgottenPassword(generateOtp(), emailId);
+				System.out.println(otpmail);
+				
+				otp.setOtpMessage("OTP sent to your email id");
+				otp.setOtpStatus(true);
+				System.out.println(otp.getOtpMessage());
+			}
+			else {
+				otp.setOtpMessage("Enter a valid email id");
+				otp.setOtpStatus(false);
+			}
+		}
+		return otp;
+	}
+	
+	public String generateOtp() {
+		String str = "0123456789";
+		String otp = "";
+		for(int i = 0; i <= 4; i++) {
+			otp += str.charAt((int)(str.length() * Math.random()));
+		}
+		return otp;
+	}
+	
+	
+	// otp check		--- otp not saved in data base.
+	public OTPCheckStatus otpCheck(String otp, String email, String enterOtp) {
+		OTPCheckStatus otpCheckStatus = new OTPCheckStatus();
+		otpCheckStatus.setOtpCheckMessage("Sorry, the otp was wrong");
+		AppUser appUser = appUserRepository.findByEmail(email);
+		return otpCheckStatus;
+	}
+	
+	
+	
+	
+	
+	
+	/*
+	 	EmailVerificationStatus emailVerificationStatus = new EmailVerificationStatus();
+		emailVerificationStatus.setMessage("Sorry. the token was wrong");
+	    AppUser appUser = appUserRepository.findByTokenAndEmail(token,email);
+	    if(appUser != null)	// check in the database whether there is a appuser object with the given token and email
+	    {
+	    	appUser.setStatus(1);
+	    	appUserRepository.save(appUser);
+	    	emailVerificationStatus.setStatus(true);
+	    	emailVerificationStatus.setMessage("Your email verified successfully");
+	    }
+	    return emailVerificationStatus;
+	 */
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+//	
+//	// password reset
+//	public PasswordResetStatus passwordReset(String currentPassword, String newPassword) {
+//		PasswordResetStatus passwordResetStatus = new PasswordResetStatus();
+//		
+//		String dbPassword = 
+//		
+//		
+//		return passwordResetStatus;
+//	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

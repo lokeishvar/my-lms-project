@@ -1,0 +1,21 @@
+nav {
+    border: 1px solid black;
+    padding: 0px;
+    margin: auto;
+
+}
+.navbar {
+    padding: 0;
+    margin: auto;
+    margin-top: 5px;
+}
+.navbar-nav {
+    background-color: white;
+    padding: 0px;
+    margin: auto;
+    justify-items: center;
+}
+.nav-item {
+    padding-right: 100px;
+    margin: auto;
+}

@@ -1,0 +1,21 @@
+<div class="packages">
+    <p class="pack">Our Packages</p>
+</div>
+<div class="packages-list">
+        <div class="pac-element" *ngFor="let pac of packages">
+            <p>Course Name: <span class="pname">{{pac.packageName}}</span></p>
+            <p>Fees: {{pac.packageFees}}</p>
+            <p>Duration: {{pac.packageDuration}}</p>
+            <p>Hours: {{pac.packageHours}}</p>
+            <button (click)="courseContent()">View Course Content</button>
+            <p id="view">all skills</p>
+        </div>
+        
+    <!-- <div *ngIf="packages.length == 0">
+        No packs available
+    </div> -->
+    
+    <!-- <ng-template #empty>No Packages</ng-template> -->
+</div>
+      
+

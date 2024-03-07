@@ -1,0 +1,18 @@
+.navbar {
+    margin: auto;
+    margin-top: 10px;
+    width: 80%;
+    color: black;
+    padding: 0px;
+    border-radius: 5px;
+}
+.container-fluid {
+    padding: 5px;
+    background-color: darkcyan;
+    color: white;
+    border-radius: 10px;
+}
+.navbar-brand {
+    color: white;
+    margin: auto;
+}
